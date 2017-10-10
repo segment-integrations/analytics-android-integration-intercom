@@ -153,7 +153,7 @@ public class IntercomIntegration extends Integration<Void> {
     public void group(GroupPayload group) {
         super.group(group);
 
-        if (isNullOrEmpty(group.userId())) return;
+        if (isNullOrEmpty(group.groupId())) return;
 
         UserAttributes.Builder userAttributes = new UserAttributes.Builder();
         Traits traits = new Traits();
@@ -163,6 +163,8 @@ public class IntercomIntegration extends Integration<Void> {
         userAttributes.withCompany(company);
         intercom.updateUser(userAttributes.build());
         logger.verbose("Intercom.client().updateUser(%s)", userAttributes);
+
+//        @InjectMocks private Company company; injects an instance of company?
     }
 
     public void reset() {
