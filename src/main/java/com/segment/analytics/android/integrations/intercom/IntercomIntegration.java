@@ -163,6 +163,8 @@ public class IntercomIntegration extends Integration<Void> {
         userAttributes.withCompany(company);
         intercom.updateUser(userAttributes.build());
         logger.verbose("Intercom.client().updateUser(%s)", userAttributes);
+
+//        @InjectMocks private Company company; injects an instance of company?
     }
 
     public void reset() {
