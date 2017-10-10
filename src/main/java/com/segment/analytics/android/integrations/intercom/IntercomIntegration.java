@@ -3,6 +3,7 @@ package com.segment.analytics.android.integrations.intercom;
 import android.app.Application;
 
 import com.segment.analytics.Analytics;
+import com.segment.analytics.Options;
 import com.segment.analytics.Properties;
 import com.segment.analytics.Traits;
 import com.segment.analytics.ValueMap;
@@ -12,6 +13,7 @@ import com.segment.analytics.integrations.Integration;
 import com.segment.analytics.integrations.Logger;
 import com.segment.analytics.integrations.TrackPayload;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,6 +22,7 @@ import io.intercom.android.sdk.Intercom;
 import io.intercom.android.sdk.UserAttributes;
 import io.intercom.android.sdk.identity.Registration;
 
+import static com.segment.analytics.integrations.BasePayload.Type.identify;
 import static com.segment.analytics.internal.Utils.isNullOrEmpty;
 
 /**
@@ -106,6 +109,11 @@ public class IntercomIntegration extends Integration<Void> {
             Registration registration = Registration.create().withUserId(userId);
             intercom.registerIdentifiedUser(registration);
             logger.verbose("Intercom.client().registerIdentifiedUser(registration)");
+        }
+
+        Map<String, Object> intercomOptions = identify.integrations().getValueMap("Intercom");
+        if (!isNullOrEmpty(intercomOptions) && !isNullOrEmpty(String.valueOf(intercomOptions.get("userHash")))) {
+            Intercom.client().setUserHash(String.valueOf(intercomOptions.get("userHash")));
         }
 
         Traits traits = identify.traits();
