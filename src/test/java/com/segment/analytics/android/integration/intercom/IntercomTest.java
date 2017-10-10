@@ -35,6 +35,7 @@ import io.intercom.android.sdk.identity.Registration;
 
 import static com.segment.analytics.Analytics.LogLevel.VERBOSE;
 import static com.segment.analytics.Utils.createTraits;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
@@ -44,11 +45,10 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 @RunWith(RobolectricTestRunner.class)
 @Config(constants = BuildConfig.class)
 @PowerMockIgnore({ "org.mockito.*", "org.roboelectric.*", "android.*" })
-@PrepareForTest({Intercom.class, UserAttributes.class})
+@PrepareForTest(Intercom.class)
 public class IntercomTest {
     @Rule public PowerMockRule rule = new PowerMockRule();
     @Mock Application application;
-    @Mock UserAttributes.Builder builder;
     @Mock Intercom intercom;
     @Mock Analytics analytics;
     private IntercomIntegration integration;
@@ -101,7 +101,11 @@ public class IntercomTest {
         traits.putValue("createdAt", createdAt);
         traits.putValue("unsubscribedFromEmails", true);
         integration.identify(new IdentifyPayloadBuilder().traits(traits).build());
-        verify(intercom).updateUser(any(UserAttributes.class));
+
+        ArgumentCaptor<UserAttributes> attributesArgumentCaptor = ArgumentCaptor.forClass(UserAttributes.class);
+        verify(intercom).updateUser(attributesArgumentCaptor.capture());
+
+        UserAttributes capturedAttributes = attributesArgumentCaptor.getValue();
     }
 
     @Test
