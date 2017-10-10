@@ -143,7 +143,7 @@ public class IntercomIntegration extends Integration<Void> {
         properties.remove(REVENUE);
       }
       if ((totalValue != null) && (totalValue instanceof Double) && (revenueValue == null)) {
-        amountDouble = (double) properties.get(REVENUE);
+        amountDouble = (double) properties.get(TOTAL);
         amountInCents = amountDouble * 100;
         price.put(AMOUNT, amountInCents);
         properties.remove(TOTAL);
