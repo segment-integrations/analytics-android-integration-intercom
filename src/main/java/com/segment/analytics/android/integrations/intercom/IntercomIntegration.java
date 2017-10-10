@@ -153,7 +153,7 @@ public class IntercomIntegration extends Integration<Void> {
     public void group(GroupPayload group) {
         super.group(group);
 
-        if (isNullOrEmpty(group.userId())) return;
+        if (isNullOrEmpty(group.groupId())) return;
 
         UserAttributes.Builder userAttributes = new UserAttributes.Builder();
         Traits traits = new Traits();

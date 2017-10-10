@@ -1,7 +1,6 @@
 package com.segment.analytics.android.integration.intercom;
 
 import android.app.Application;
-import android.util.Log;
 
 import com.segment.analytics.Analytics;
 import com.segment.analytics.Properties;
@@ -14,19 +13,13 @@ import com.segment.analytics.test.GroupPayloadBuilder;
 import com.segment.analytics.test.IdentifyPayloadBuilder;
 import com.segment.analytics.test.TrackPayloadBuilder;
 
-import org.hamcrest.Description;
-import org.hamcrest.TypeSafeMatcher;
-import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.Mockito.*;
-import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
@@ -40,12 +33,10 @@ import io.intercom.android.sdk.Intercom;
 import io.intercom.android.sdk.UserAttributes;
 import io.intercom.android.sdk.identity.Registration;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.argThat;
-import static org.powermock.api.mockito.PowerMockito.mock;
 import static com.segment.analytics.Analytics.LogLevel.VERBOSE;
 import static com.segment.analytics.Utils.createTraits;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
@@ -53,10 +44,11 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 @RunWith(RobolectricTestRunner.class)
 @Config(constants = BuildConfig.class)
 @PowerMockIgnore({ "org.mockito.*", "org.roboelectric.*", "android.*" })
-@PrepareForTest({Intercom.class, UserAttributes.class, UserAttributes.Builder.class})
+@PrepareForTest({Intercom.class, UserAttributes.class})
 public class IntercomTest {
     @Rule public PowerMockRule rule = new PowerMockRule();
     @Mock Application application;
+    @Mock UserAttributes.Builder builder;
     @Mock Intercom intercom;
     @Mock Analytics analytics;
     private IntercomIntegration integration;
@@ -79,7 +71,7 @@ public class IntercomTest {
 
     @Test
     public void initialize() {
-        IntercomIntegration integration = new IntercomIntegration(mockProvider, application, new ValueMap()
+        integration = new IntercomIntegration(mockProvider, application, new ValueMap()
                 .putValue("apiKey", "123")
                 .putValue("appId", "123"),
                 Logger.with(VERBOSE));
@@ -109,12 +101,7 @@ public class IntercomTest {
         traits.putValue("createdAt", createdAt);
         traits.putValue("unsubscribedFromEmails", true);
         integration.identify(new IdentifyPayloadBuilder().traits(traits).build());
-
-        UserAttributes.Builder mock = Mockito.mock(UserAttributes.Builder.class);
-
-        verify(mock).withName("Brennan"); // error "Actually, there were zero interactions with this mock."
-        // stepping through integration shows that UserAttributes.Builder works as expected
-         verify(intercom).updateUser(any(UserAttributes.class));
+        verify(intercom).updateUser(any(UserAttributes.class));
     }
 
     @Test
@@ -125,8 +112,7 @@ public class IntercomTest {
         company.put("name", "Acme");
         traits.put("company", company);
         integration.identify(new IdentifyPayloadBuilder().traits(traits).build());
-
-        // need to assert equality of company object
+        verify(intercom).updateUser(any(UserAttributes.class));
     }
 
 
@@ -174,8 +160,7 @@ public class IntercomTest {
         traits.put("monthlySpend", monthlySpend);
         traits.put("plan", "startup");
         integration.group(new GroupPayloadBuilder().groupId("123").groupTraits(traits).build());
-
-        // need to assert equality of company object
+        verify(intercom).updateUser(any(UserAttributes.class));
     }
 
     @Test
