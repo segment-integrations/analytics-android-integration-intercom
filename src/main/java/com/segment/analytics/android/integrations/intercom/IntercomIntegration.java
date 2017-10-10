@@ -36,7 +36,6 @@ public class IntercomIntegration extends Integration<Void> {
             new Factory() {
                 @Override
                 public Integration<?> create(ValueMap settings, Analytics analytics) {
-
                     Logger logger = analytics.logger(INTERCOM_KEY);
 
                     Application application = analytics.getApplication();
@@ -86,8 +85,8 @@ public class IntercomIntegration extends Integration<Void> {
     }
 
     public IntercomIntegration(Provider provider, Application application, ValueMap settings, Logger logger) {
-    String apiKey = settings.getString("apiKey");
-    String appId = settings.getString("appId");
+        String apiKey = settings.getString("apiKey");
+        String appId = settings.getString("appId");
 
         Intercom.initialize(application, apiKey, appId);
         this.intercom = provider.get();
@@ -171,15 +170,15 @@ public class IntercomIntegration extends Integration<Void> {
     }
 
     private void setUserAttributes(Traits realTraits) {
-        String name = realTraits.name();
-        String email = realTraits.email();
-        String phone = realTraits.phone();
-        String languageOverride = realTraits.getString("languageOverride");
-
         Traits traitsCopy = new Traits();
         traitsCopy.putAll(realTraits);
         traitsCopy.remove("userId");
         traitsCopy.remove("anonymousId");
+
+        String name = traitsCopy.name();
+        String email = traitsCopy.email();
+        String phone = traitsCopy.phone();
+        String languageOverride = traitsCopy.getString(LANGUAGE_OVERRIDE);
 
         UserAttributes.Builder userAttributes = new UserAttributes.Builder();
 
@@ -209,7 +208,6 @@ public class IntercomIntegration extends Integration<Void> {
             userAttributes.withUnsubscribedFromEmails(unsubscribedFromEmails);
             traitsCopy.remove(UNSUBSCRIBED_FROM_EMAILS);
         }
-        // if company is a string, we pass this along as a custom attribute rather than as company type
         if (traitsCopy.containsKey(COMPANY) && traitsCopy.get(COMPANY) instanceof Map) {
             Map<String, Object> companyObj = (HashMap<String, Object>) traitsCopy.get(COMPANY);
             Company company = setCompany(companyObj);
@@ -220,7 +218,6 @@ public class IntercomIntegration extends Integration<Void> {
         for (Map.Entry<String, Object> entry : traitsCopy.entrySet()) {
             String trait = entry.getKey();
             Object value = entry.getValue();
-            logger.verbose("Custom " + trait + " " + value);
             userAttributes.withCustomAttribute(trait, value);
         }
         intercom.updateUser(userAttributes.build());

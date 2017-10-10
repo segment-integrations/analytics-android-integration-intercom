@@ -42,8 +42,8 @@ dependencies {
 
   compile 'com.segment.analytics.android:analytics:4.0.0'
 
-  compile 'io.intercom.android:intercom-sdk-base:4.+'
-  compile 'io.intercom.android:intercom-sdk-fcm:4.+'
+  compile 'io.intercom.android:intercom-sdk-base:4.0.5'
+  compile 'io.intercom.android:intercom-sdk-fcm:4.0.5'
 
   testCompile 'com.segment.analytics.android:analytics-tests:4.2.6'
 
