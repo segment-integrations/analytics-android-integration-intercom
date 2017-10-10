@@ -71,6 +71,9 @@ public class IntercomIntegration extends Integration<Void> {
     private static final String MONTHLY_SPEND = "monthlySpend";
     private static final String PLAN = "plan";
 
+    // Segment specced constants
+    private static final String TOTAL = "total";
+
     public interface Provider {
 
         Intercom get();
@@ -128,6 +131,10 @@ public class IntercomIntegration extends Integration<Void> {
             if (properties.get(REVENUE) != null) {
                 price.put(REVENUE, properties.get(REVENUE));
                 properties.remove(REVENUE);
+            }
+            if ((properties.get(TOTAL) != null) && (price.get(REVENUE) == null)) {
+                price.put(TOTAL, properties.get(TOTAL));
+                properties.remove(TOTAL);
             }
             if (properties.get(CURRENCY) != null) {
                 price.put(CURRENCY, String.valueOf(properties.get(CURRENCY)));
