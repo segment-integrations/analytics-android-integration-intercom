@@ -29,13 +29,13 @@ import org.robolectric.annotation.Config;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.intercom.android.sdk.Company;
 import io.intercom.android.sdk.Intercom;
 import io.intercom.android.sdk.UserAttributes;
 import io.intercom.android.sdk.identity.Registration;
 
 import static com.segment.analytics.Analytics.LogLevel.VERBOSE;
 import static com.segment.analytics.Utils.createTraits;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
@@ -106,6 +106,14 @@ public class IntercomTest {
         verify(intercom).updateUser(attributesArgumentCaptor.capture());
 
         UserAttributes capturedAttributes = attributesArgumentCaptor.getValue();
+        Map<String, Object> mapOfAttributes = capturedAttributes.toMap();
+
+        assertEquals("Brennan", String.valueOf(mapOfAttributes.get("name")));
+        assertEquals("testing@segment.com", String.valueOf(mapOfAttributes.get("email")));
+        assertEquals("1112223333", String.valueOf(mapOfAttributes.get("phone")));
+        assertEquals("testing", String.valueOf(mapOfAttributes.get("language_override")));
+        assertEquals(createdAt, mapOfAttributes.get("signed_up_at"));
+        assertEquals(true, mapOfAttributes.get("unsubscribed_from_emails"));
     }
 
     @Test
@@ -165,11 +173,19 @@ public class IntercomTest {
         traits.put("plan", "startup");
         integration.group(new GroupPayloadBuilder().groupId("123").groupTraits(traits).build());
         verify(intercom).updateUser(any(UserAttributes.class));
+
+        ArgumentCaptor<UserAttributes> attributesArgumentCaptor = ArgumentCaptor.forClass(UserAttributes.class);
+        verify(intercom).updateUser(attributesArgumentCaptor.capture());
+
+        UserAttributes capturedAttributes = attributesArgumentCaptor.getValue();
+        Map<String, Object> mapOfAttributes = capturedAttributes.toMap();
+
+        assertEquals(any(Company.class), mapOfAttributes.get("company"));
     }
 
     @Test
     public void reset() {
         integration.reset();
-        verify(intercom).reset();
+        verify(intercom).logout();
     }
 }
