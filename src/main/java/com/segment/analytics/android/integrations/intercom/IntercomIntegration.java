@@ -71,10 +71,6 @@ public class IntercomIntegration extends Integration<Void> {
   private static final String MONTHLY_SPEND = "monthlySpend";
   private static final String PLAN = "plan";
 
-  // Segment specced constants
-  private static final String TOTAL = "total";
-  private static final String REVENUE = "revenue";
-
   public interface Provider {
 
     Intercom get();
@@ -113,9 +109,15 @@ public class IntercomIntegration extends Integration<Void> {
       logger.verbose("Intercom.client().registerIdentifiedUser(registration)");
     }
 
+    Map<String, Object> intercomOptions = identify.integrations().getValueMap("Intercom");
+    if (!isNullOrEmpty(intercomOptions)
+        && !isNullOrEmpty(String.valueOf(intercomOptions.get("userHash")))) {
+      Intercom.client().setUserHash(String.valueOf(intercomOptions.get("userHash")));
+    }
+
     Traits traits = identify.traits();
     if (!isNullOrEmpty(traits)) {
-      setUserAttributes(traits);
+      setUserAttributes(traits, intercomOptions);
     }
   }
 
@@ -126,37 +128,9 @@ public class IntercomIntegration extends Integration<Void> {
     String eventName = track.event();
     Properties properties = new Properties();
     properties.putAll(track.properties());
-    Map<String, Object> price = new HashMap<>();
     Map<String, Object> propertiesMap = new HashMap<>();
 
     if (!isNullOrEmpty(properties)) {
-
-      Object revenueValue = properties.get(REVENUE);
-      Object totalValue = properties.get(TOTAL);
-      double amountDouble;
-      double amountInCents;
-
-      if ((revenueValue != null) && (revenueValue instanceof Double)) {
-        amountDouble = (double) properties.get(REVENUE);
-        amountInCents = amountDouble * 100;
-        price.put(AMOUNT, amountInCents);
-        properties.remove(REVENUE);
-      }
-      if ((totalValue != null) && (totalValue instanceof Double) && (revenueValue == null)) {
-        amountDouble = (double) properties.get(TOTAL);
-        amountInCents = amountDouble * 100;
-        price.put(AMOUNT, amountInCents);
-        properties.remove(TOTAL);
-      }
-      if (properties.get(CURRENCY) != null) {
-        price.put(CURRENCY, String.valueOf(properties.get(CURRENCY)));
-        properties.remove(CURRENCY);
-      }
-
-      if (!isNullOrEmpty(price)) {
-        propertiesMap.put(PRICE, price);
-      }
-
       for (Map.Entry<String, Object> entry : properties.entrySet()) {
         String trait = entry.getKey();
         Object value = entry.getValue();
@@ -188,7 +162,7 @@ public class IntercomIntegration extends Integration<Void> {
     logger.verbose("Intercom.client().reset()");
   }
 
-  private void setUserAttributes(Traits realTraits) {
+  private void setUserAttributes(Traits realTraits, Map<String, Object> intercomOptions) {
     Traits traitsCopy = new Traits();
     traitsCopy.putAll(realTraits);
     traitsCopy.remove("userId");
@@ -197,7 +171,10 @@ public class IntercomIntegration extends Integration<Void> {
     String name = traitsCopy.name();
     String email = traitsCopy.email();
     String phone = traitsCopy.phone();
-    String languageOverride = traitsCopy.getString(LANGUAGE_OVERRIDE);
+
+    Object optionsUnsubscribedFromEmails = intercomOptions.get(UNSUBSCRIBED_FROM_EMAILS);
+    Object optionsCreatedAt = intercomOptions.get(CREATED_AT);
+    String languageOverride = String.valueOf(intercomOptions.get(LANGUAGE_OVERRIDE));
 
     UserAttributes.Builder userAttributes = new UserAttributes.Builder();
 
@@ -215,17 +192,14 @@ public class IntercomIntegration extends Integration<Void> {
     }
     if (!isNullOrEmpty(languageOverride)) {
       userAttributes.withLanguageOverride(languageOverride);
-      traitsCopy.remove(LANGUAGE_OVERRIDE);
     }
-    if (traitsCopy.containsKey(CREATED_AT)) {
-      long signedUpAt = traitsCopy.getLong(CREATED_AT, 0);
-      userAttributes.withSignedUpAt(signedUpAt);
-      traitsCopy.remove(CREATED_AT);
+    if (optionsCreatedAt != null && optionsCreatedAt instanceof Long) {
+      long createdAt = (long) intercomOptions.get(CREATED_AT);
+      userAttributes.withSignedUpAt(createdAt);
     }
-    if (traitsCopy.containsKey(UNSUBSCRIBED_FROM_EMAILS)) {
-      boolean unsubscribedFromEmails = traitsCopy.getBoolean(UNSUBSCRIBED_FROM_EMAILS, false);
+    if (optionsUnsubscribedFromEmails != null && optionsUnsubscribedFromEmails instanceof Boolean) {
+      boolean unsubscribedFromEmails = (boolean) intercomOptions.get(UNSUBSCRIBED_FROM_EMAILS);
       userAttributes.withUnsubscribedFromEmails(unsubscribedFromEmails);
-      traitsCopy.remove(UNSUBSCRIBED_FROM_EMAILS);
     }
     if (traitsCopy.containsKey(COMPANY) && traitsCopy.get(COMPANY) instanceof Map) {
       Map<String, Object> companyObj = (HashMap<String, Object>) traitsCopy.get(COMPANY);
