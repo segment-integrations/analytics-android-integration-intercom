@@ -159,6 +159,22 @@ public class IntercomTest {
     }
 
     @Test
+    public void trackWithRevenue() {
+        Properties properties = new Properties();
+        properties.putValue("total", 100.0);
+        properties.putCurrency("USD");
+        integration.track(new TrackPayloadBuilder().event("Baz").properties(properties).build());
+
+        Map<String, Object> expectedProperties = new HashMap<>();
+        Map<String, Object> price = new HashMap<>();
+        price.put("amount", 10000);
+        price.put("currency", "USD");
+        expectedProperties.put("price", price);
+
+        verify(intercom).logEvent("Baz", expectedProperties);
+    }
+
+    @Test
     public void group() {
         Traits traits = new Traits();
         long createdAt = 123344L;
