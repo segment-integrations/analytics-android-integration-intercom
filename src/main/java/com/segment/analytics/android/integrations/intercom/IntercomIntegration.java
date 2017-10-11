@@ -58,6 +58,9 @@ public class IntercomIntegration extends Integration<Void> {
   private static final String NAME = "name";
   private static final String CREATED_AT = "createdAt";
   private static final String COMPANY = "company";
+  private static final String PRICE = "price";
+  private static final String AMOUNT = "amount";
+  private static final String CURRENCY = "currency";
 
   // Intercom specced user attributes
   private static final String EMAIL = "email";
@@ -68,6 +71,10 @@ public class IntercomIntegration extends Integration<Void> {
   // Intercom specced group attributes
   private static final String MONTHLY_SPEND = "monthlySpend";
   private static final String PLAN = "plan";
+
+  // Segment specced properties
+  private static final String REVENUE = "revenue";
+  private static final String TOTAL = "total";
 
   public interface Provider {
 
@@ -126,11 +133,44 @@ public class IntercomIntegration extends Integration<Void> {
     super.track(track);
 
     String eventName = track.event();
-    Properties properties = track.properties();
+    Properties realProperties = track.properties();
 
-    if (!isNullOrEmpty(properties)) {
-      intercom.logEvent(eventName, properties);
-      logger.verbose("Intercom.client().logEvent(%s, %s)", eventName, properties);
+    if (!isNullOrEmpty(realProperties)) {
+      Properties propertiesCopy = new Properties();
+      propertiesCopy.putAll(realProperties);
+      Map<String, Object> price = new HashMap<>();
+      Object revenueValue = propertiesCopy.get(REVENUE);
+      Object totalValue = propertiesCopy.get(TOTAL);
+      double amountDouble;
+      int amountInCents;
+
+      if ((revenueValue != null) && (revenueValue instanceof Double)) {
+        amountDouble = (double) propertiesCopy.get(REVENUE);
+        amountInCents = (int) amountDouble * 100;
+        price.put(AMOUNT, amountInCents);
+        propertiesCopy.remove(REVENUE);
+      }
+      if ((totalValue != null) && (totalValue instanceof Double) && (revenueValue == null)) {
+        amountDouble = (double) propertiesCopy.get(TOTAL);
+        amountInCents = (int) amountDouble * 100;
+        price.put(AMOUNT, amountInCents);
+        propertiesCopy.remove(TOTAL);
+      }
+      if (propertiesCopy.get(CURRENCY) != null) {
+        price.put(CURRENCY, String.valueOf(propertiesCopy.get(CURRENCY)));
+        propertiesCopy.remove(CURRENCY);
+      }
+
+      if (!isNullOrEmpty(price)) {
+        propertiesCopy.put(PRICE, price);
+      }
+      for (Map.Entry<String, Object> entry : propertiesCopy.entrySet()) {
+        String trait = entry.getKey();
+        Object value = entry.getValue();
+        propertiesCopy.put(trait, value);
+      }
+      intercom.logEvent(eventName, propertiesCopy);
+      logger.verbose("Intercom.client().logEvent(%s, %s)", eventName, propertiesCopy);
       return;
     }
     intercom.logEvent(eventName);
