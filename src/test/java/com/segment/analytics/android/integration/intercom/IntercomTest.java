@@ -6,6 +6,7 @@ import com.segment.analytics.Analytics;
 import com.segment.analytics.Properties;
 import com.segment.analytics.Traits;
 import com.segment.analytics.ValueMap;
+import com.segment.analytics.Options;
 import com.segment.analytics.android.integrations.intercom.IntercomIntegration;
 import com.segment.analytics.core.tests.BuildConfig;
 import com.segment.analytics.integrations.Logger;
@@ -91,16 +92,30 @@ public class IntercomTest {
     }
 
     @Test
+    public void identifyWithUserHash() {
+        Traits traits = createTraits("123");
+        Options options = new Options();
+        Map<String, Object> intercomOptions = new HashMap<>();
+        intercomOptions.put("userHash", "567");
+        options.setIntegrationOptions("Intercom", intercomOptions);
+        integration.identify(new IdentifyPayloadBuilder().traits(traits).options(options).build());
+        verify(intercom).setUserHash("567");
+    }
+
+    @Test
     public void identifyWithSpeccedAttributes() {
         long createdAt = 123344L;
         Traits traits = createTraits("123");
         traits.putName("Brennan");
         traits.putEmail("testing@segment.com");
         traits.putPhone("1112223333");
-        traits.putValue("languageOverride", "testing");
-        traits.putValue("createdAt", createdAt);
-        traits.putValue("unsubscribedFromEmails", true);
-        integration.identify(new IdentifyPayloadBuilder().traits(traits).build());
+        Options options = new Options();
+        Map<String, Object> intercomOptions = new HashMap<>();
+        intercomOptions.put("languageOverride", "testing");
+        intercomOptions.put("createdAt", createdAt);
+        intercomOptions.put("unsubscribedFromEmails", true);
+        options.setIntegrationOptions("Intercom", intercomOptions);
+        integration.identify(new IdentifyPayloadBuilder().traits(traits).options(options).build());
 
         ArgumentCaptor<UserAttributes> attributesArgumentCaptor = ArgumentCaptor.forClass(UserAttributes.class);
         verify(intercom).updateUser(attributesArgumentCaptor.capture());
@@ -143,22 +158,6 @@ public class IntercomTest {
         integration.track(new TrackPayloadBuilder().event("Baz").properties(properties).build());
 
         verify(intercom).logEvent("Baz", properties.toStringMap());
-    }
-
-    @Test
-    public void trackWithRevenue() {
-        Properties properties = new Properties();
-        properties.putRevenue(100.0);
-        properties.putCurrency("USD");
-        integration.track(new TrackPayloadBuilder().event("Baz").properties(properties).build());
-
-        Map<String, Object> eventProperties = new HashMap<>();
-        Map<String, Object> price = new HashMap<>();
-        price.put("revenue", 100.0);
-        price.put("currency", "USD");
-        eventProperties.put("price", price);
-
-        verify(intercom).logEvent("Baz", eventProperties);
     }
 
     @Test
