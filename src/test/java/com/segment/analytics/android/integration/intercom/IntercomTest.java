@@ -63,7 +63,7 @@ public class IntercomTest {
     public void setUp() {
         initMocks(this);
         integration = new IntercomIntegration(mockProvider, application, new ValueMap()
-                .putValue("apiKey", "123")
+                .putValue("mobileApiKey", "123")
                 .putValue("appId", "123"),
                 Logger.with(VERBOSE));
         Mockito.reset(intercom);
@@ -72,7 +72,7 @@ public class IntercomTest {
     @Test
     public void initialize() {
         integration = new IntercomIntegration(mockProvider, application, new ValueMap()
-                .putValue("apiKey", "123")
+                .putValue("mobileApiKey", "123")
                 .putValue("appId", "123"),
                 Logger.with(VERBOSE));
 
@@ -144,10 +144,9 @@ public class IntercomTest {
 
     @Test
     public void track() {
-        Properties properties = new Properties();
-        integration.track(new TrackPayloadBuilder().event("Foo").properties(properties).build());
+        integration.track(new TrackPayloadBuilder().event("Foo").build());
 
-        verify(intercom).logEvent("Foo", properties.toStringMap());
+        verify(intercom).logEvent("Foo");
     }
 
     @Test

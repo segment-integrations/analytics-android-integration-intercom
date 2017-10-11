@@ -58,9 +58,6 @@ public class IntercomIntegration extends Integration<Void> {
   private static final String NAME = "name";
   private static final String CREATED_AT = "createdAt";
   private static final String COMPANY = "company";
-  private static final String PRICE = "price";
-  private static final String CURRENCY = "currency";
-  private static final String AMOUNT = "amount";
 
   // Intercom specced user attributes
   private static final String EMAIL = "email";
@@ -140,7 +137,12 @@ public class IntercomIntegration extends Integration<Void> {
         propertiesMap.put(trait, value);
       }
     }
-    intercom.logEvent(eventName, propertiesMap);
+
+    if (!isNullOrEmpty(properties)) {
+      intercom.logEvent(eventName, properties);
+    } else {
+      intercom.logEvent(eventName);
+    }
     logger.verbose("Intercom.client().logEvent(%s, %s)", eventName, propertiesMap);
   }
 
