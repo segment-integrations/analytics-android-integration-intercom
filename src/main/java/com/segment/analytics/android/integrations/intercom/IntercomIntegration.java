@@ -87,10 +87,10 @@ public class IntercomIntegration extends Integration<Void> {
 
   public IntercomIntegration(
       Provider provider, Application application, ValueMap settings, Logger logger) {
-    String apiKey = settings.getString("apiKey");
+    String mobileApiKey = settings.getString("mobileApiKey");
     String appId = settings.getString("appId");
 
-    Intercom.initialize(application, apiKey, appId);
+    Intercom.initialize(application, mobileApiKey, appId);
     this.intercom = provider.get();
     this.logger = logger;
   }
@@ -202,7 +202,8 @@ public class IntercomIntegration extends Integration<Void> {
         long createdAt = (long) intercomOptions.get(CREATED_AT);
         userAttributes.withSignedUpAt(createdAt);
       }
-      if (optionsUnsubscribedFromEmails != null && optionsUnsubscribedFromEmails instanceof Boolean) {
+      if (optionsUnsubscribedFromEmails != null
+          && optionsUnsubscribedFromEmails instanceof Boolean) {
         boolean unsubscribedFromEmails = (boolean) intercomOptions.get(UNSUBSCRIBED_FROM_EMAILS);
         userAttributes.withUnsubscribedFromEmails(unsubscribedFromEmails);
       }
