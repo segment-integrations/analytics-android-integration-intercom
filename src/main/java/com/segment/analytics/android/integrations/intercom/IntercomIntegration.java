@@ -160,14 +160,8 @@ public class IntercomIntegration extends Integration<Void> {
         price.put(CURRENCY, String.valueOf(propertiesCopy.get(CURRENCY)));
         propertiesCopy.remove(CURRENCY);
       }
-
       if (!isNullOrEmpty(price)) {
         propertiesCopy.put(PRICE, price);
-      }
-      for (Map.Entry<String, Object> entry : propertiesCopy.entrySet()) {
-        String trait = entry.getKey();
-        Object value = entry.getValue();
-        propertiesCopy.put(trait, value);
       }
       intercom.logEvent(eventName, propertiesCopy);
       logger.verbose("Intercom.client().logEvent(%s, %s)", eventName, propertiesCopy);
