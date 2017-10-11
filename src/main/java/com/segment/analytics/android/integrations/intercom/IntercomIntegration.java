@@ -1,6 +1,7 @@
 package com.segment.analytics.android.integrations.intercom;
 
 import android.app.Application;
+import android.support.annotation.Nullable;
 
 import com.segment.analytics.Analytics;
 import com.segment.analytics.Properties;
@@ -84,7 +85,7 @@ public class IntercomIntegration extends Integration<Void> {
         };
   }
 
-  private IntercomIntegration(
+  public IntercomIntegration(
       Provider provider, Application application, ValueMap settings, Logger logger) {
     String apiKey = settings.getString("apiKey");
     String appId = settings.getString("appId");
@@ -112,13 +113,15 @@ public class IntercomIntegration extends Integration<Void> {
     Map<String, Object> intercomOptions = identify.integrations().getValueMap("Intercom");
     if (!isNullOrEmpty(intercomOptions)
         && !isNullOrEmpty(String.valueOf(intercomOptions.get("userHash")))) {
-      Intercom.client().setUserHash(String.valueOf(intercomOptions.get("userHash")));
+      intercom.setUserHash(String.valueOf(intercomOptions.get("userHash")));
     }
 
     Traits traits = identify.traits();
-    if (!isNullOrEmpty(traits)) {
+    if (!isNullOrEmpty(traits) && (!isNullOrEmpty(intercomOptions))) {
       setUserAttributes(traits, intercomOptions);
+      return;
     }
+    setUserAttributes(traits, null);
   }
 
   @Override
@@ -145,7 +148,7 @@ public class IntercomIntegration extends Integration<Void> {
   public void group(GroupPayload group) {
     super.group(group);
 
-    if (isNullOrEmpty(group.userId())) return;
+    if (isNullOrEmpty(group.groupId())) return;
 
     UserAttributes.Builder userAttributes = new UserAttributes.Builder();
     Traits traits = new Traits();
@@ -158,11 +161,11 @@ public class IntercomIntegration extends Integration<Void> {
   }
 
   public void reset() {
-    intercom.reset();
+    intercom.logout();
     logger.verbose("Intercom.client().reset()");
   }
 
-  private void setUserAttributes(Traits realTraits, Map<String, Object> intercomOptions) {
+  private void setUserAttributes(Traits realTraits, @Nullable Map<String, Object> intercomOptions) {
     Traits traitsCopy = new Traits();
     traitsCopy.putAll(realTraits);
     traitsCopy.remove("userId");
@@ -171,10 +174,6 @@ public class IntercomIntegration extends Integration<Void> {
     String name = traitsCopy.name();
     String email = traitsCopy.email();
     String phone = traitsCopy.phone();
-
-    Object optionsUnsubscribedFromEmails = intercomOptions.get(UNSUBSCRIBED_FROM_EMAILS);
-    Object optionsCreatedAt = intercomOptions.get(CREATED_AT);
-    String languageOverride = String.valueOf(intercomOptions.get(LANGUAGE_OVERRIDE));
 
     UserAttributes.Builder userAttributes = new UserAttributes.Builder();
 
@@ -190,17 +189,25 @@ public class IntercomIntegration extends Integration<Void> {
       userAttributes.withPhone(phone);
       traitsCopy.remove(PHONE);
     }
-    if (!isNullOrEmpty(languageOverride)) {
-      userAttributes.withLanguageOverride(languageOverride);
+
+    if (!isNullOrEmpty(intercomOptions)) {
+      Object optionsUnsubscribedFromEmails = intercomOptions.get(UNSUBSCRIBED_FROM_EMAILS);
+      Object optionsCreatedAt = intercomOptions.get(CREATED_AT);
+      String languageOverride = String.valueOf(intercomOptions.get(LANGUAGE_OVERRIDE));
+
+      if (!isNullOrEmpty(languageOverride)) {
+        userAttributes.withLanguageOverride(languageOverride);
+      }
+      if (optionsCreatedAt != null && optionsCreatedAt instanceof Long) {
+        long createdAt = (long) intercomOptions.get(CREATED_AT);
+        userAttributes.withSignedUpAt(createdAt);
+      }
+      if (optionsUnsubscribedFromEmails != null && optionsUnsubscribedFromEmails instanceof Boolean) {
+        boolean unsubscribedFromEmails = (boolean) intercomOptions.get(UNSUBSCRIBED_FROM_EMAILS);
+        userAttributes.withUnsubscribedFromEmails(unsubscribedFromEmails);
+      }
     }
-    if (optionsCreatedAt != null && optionsCreatedAt instanceof Long) {
-      long createdAt = (long) intercomOptions.get(CREATED_AT);
-      userAttributes.withSignedUpAt(createdAt);
-    }
-    if (optionsUnsubscribedFromEmails != null && optionsUnsubscribedFromEmails instanceof Boolean) {
-      boolean unsubscribedFromEmails = (boolean) intercomOptions.get(UNSUBSCRIBED_FROM_EMAILS);
-      userAttributes.withUnsubscribedFromEmails(unsubscribedFromEmails);
-    }
+
     if (traitsCopy.containsKey(COMPANY) && traitsCopy.get(COMPANY) instanceof Map) {
       Map<String, Object> companyObj = (HashMap<String, Object>) traitsCopy.get(COMPANY);
       Company company = setCompany(companyObj);
