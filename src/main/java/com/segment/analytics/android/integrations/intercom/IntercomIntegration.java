@@ -126,24 +126,15 @@ public class IntercomIntegration extends Integration<Void> {
     super.track(track);
 
     String eventName = track.event();
-    Properties properties = new Properties();
-    properties.putAll(track.properties());
-    Map<String, Object> propertiesMap = new HashMap<>();
-
-    if (!isNullOrEmpty(properties)) {
-      for (Map.Entry<String, Object> entry : properties.entrySet()) {
-        String trait = entry.getKey();
-        Object value = entry.getValue();
-        propertiesMap.put(trait, value);
-      }
-    }
+    Properties properties = track.properties();
 
     if (!isNullOrEmpty(properties)) {
       intercom.logEvent(eventName, properties);
-    } else {
-      intercom.logEvent(eventName);
+      logger.verbose("Intercom.client().logEvent(%s, %s)", eventName, properties);
+      return;
     }
-    logger.verbose("Intercom.client().logEvent(%s, %s)", eventName, propertiesMap);
+    intercom.logEvent(eventName);
+    logger.verbose("Intercom.client().logEvent(%s)", eventName);
   }
 
   @Override
