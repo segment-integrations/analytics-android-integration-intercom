@@ -22,7 +22,6 @@ import io.intercom.android.sdk.UserAttributes;
 import io.intercom.android.sdk.identity.Registration;
 
 import static com.segment.analytics.internal.Utils.isNullOrEmpty;
-import static io.intercom.okhttp3.internal.Internal.instance;
 
 /**
  * Intercom is your direct line of communication to every user, right inside your app. Intercom's
