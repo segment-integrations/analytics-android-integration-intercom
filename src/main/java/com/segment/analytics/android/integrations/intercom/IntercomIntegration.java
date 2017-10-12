@@ -163,6 +163,13 @@ public class IntercomIntegration extends Integration<Void> {
       if (!isNullOrEmpty(price)) {
         propertiesCopy.put(PRICE, price);
       }
+      for (Map.Entry<String, Object> entry : realProperties.entrySet()) {
+        String key = entry.getKey();
+        Object value = entry.getValue();
+        if (key.equals("products") || value instanceof Map) {
+          propertiesCopy.remove(key);
+        }
+      }
       intercom.logEvent(eventName, propertiesCopy);
       logger.verbose("Intercom.client().logEvent(%s, %s)", eventName, propertiesCopy);
       return;
@@ -235,14 +242,12 @@ public class IntercomIntegration extends Integration<Void> {
         userAttributes.withUnsubscribedFromEmails(unsubscribedFromEmails);
       }
     }
-
     if (traitsCopy.containsKey(COMPANY) && traitsCopy.get(COMPANY) instanceof Map) {
       Map<String, Object> companyObj = (HashMap<String, Object>) traitsCopy.get(COMPANY);
       Company company = setCompany(companyObj);
       userAttributes.withCompany(company);
       traitsCopy.remove(COMPANY);
     }
-
     for (Map.Entry<String, Object> entry : traitsCopy.entrySet()) {
       String trait = entry.getKey();
       Object value = entry.getValue();
