@@ -5,6 +5,7 @@ import android.app.Application;
 import com.segment.analytics.Analytics;
 import com.segment.analytics.Options;
 import com.segment.analytics.Properties;
+import com.segment.analytics.Properties.Product;
 import com.segment.analytics.Traits;
 import com.segment.analytics.ValueMap;
 import com.segment.analytics.android.integrations.intercom.IntercomIntegration;
@@ -20,7 +21,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
@@ -66,11 +67,11 @@ public class IntercomTest {
                 .putValue("mobileApiKey", "123")
                 .putValue("appId", "123"),
                 Logger.with(VERBOSE));
-        Mockito.reset(intercom);
     }
 
     @Test
     public void initialize() {
+        PowerMockito.mockStatic(Intercom.class);
         integration = new IntercomIntegration(mockProvider, application, new ValueMap()
                 .putValue("mobileApiKey", "123")
                 .putValue("appId", "123"),
@@ -159,19 +160,36 @@ public class IntercomTest {
     }
 
     @Test
-    public void trackWithRevenue() {
+    public void trackWithIllegalNestedProperties() {
         Properties properties = new Properties();
-        properties.putValue("total", 100.0);
-        properties.putCurrency("USD");
+        Map <String, Object> bar = new HashMap<>();
+        properties.putValue("foo", bar);
+        properties.putValue("baz", "yo");
         integration.track(new TrackPayloadBuilder().event("Baz").properties(properties).build());
 
+        properties.remove("foo");
+        verify(intercom).logEvent("Baz", properties);
+    }
+
+    @Test
+    public void trackWithRevenue() {
+        Properties properties = new Properties();
+        properties.putValue("orderId", "12345");
+        properties.putValue("revenue", 100.0);
+        properties.putCurrency("USD");
+        Product product = new Product("456", "ABC", 100.0);
+        Product product2 = new Product("789", "DEF", 100.0);
+        properties.putProducts(product, product2);
+        integration.track(new TrackPayloadBuilder().event("Order Completed").properties(properties).build());
+
         Map<String, Object> expectedProperties = new HashMap<>();
+        expectedProperties.put("orderId", "12345");
         Map<String, Object> price = new HashMap<>();
         price.put("amount", 10000);
         price.put("currency", "USD");
         expectedProperties.put("price", price);
 
-        verify(intercom).logEvent("Baz", expectedProperties);
+        verify(intercom).logEvent("Order Completed", expectedProperties);
     }
 
     @Test
