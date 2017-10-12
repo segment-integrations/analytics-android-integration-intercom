@@ -251,7 +251,9 @@ public class IntercomIntegration extends Integration<Void> {
     for (Map.Entry<String, Object> entry : traitsCopy.entrySet()) {
       String trait = entry.getKey();
       Object value = entry.getValue();
-      userAttributes.withCustomAttribute(trait, value);
+      if (!(value instanceof Map)) {
+        userAttributes.withCustomAttribute(trait, value);
+      }
     }
     intercom.updateUser(userAttributes.build());
     logger.verbose("Intercom.client().updateUser(userAttributes)");
@@ -285,7 +287,9 @@ public class IntercomIntegration extends Integration<Void> {
     for (Map.Entry<String, Object> entry : payload.entrySet()) {
       String trait = entry.getKey();
       Object value = entry.getValue();
-      company.withCustomAttribute(trait, value);
+      if (!(value instanceof Map)) {
+        company.withCustomAttribute(trait, value);
+      }
     }
     return company.build();
   }
