@@ -21,7 +21,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
@@ -34,6 +34,7 @@ import java.util.Map;
 import io.intercom.android.sdk.Intercom;
 import io.intercom.android.sdk.UserAttributes;
 import io.intercom.android.sdk.identity.Registration;
+
 import static com.segment.analytics.Analytics.LogLevel.VERBOSE;
 import static com.segment.analytics.Utils.createTraits;
 import static org.junit.Assert.assertEquals;
@@ -66,11 +67,11 @@ public class IntercomTest {
                 .putValue("mobileApiKey", "123")
                 .putValue("appId", "123"),
                 Logger.with(VERBOSE));
-        Mockito.reset(intercom);
     }
 
     @Test
     public void initialize() {
+        PowerMockito.mockStatic(Intercom.class);
         integration = new IntercomIntegration(mockProvider, application, new ValueMap()
                 .putValue("mobileApiKey", "123")
                 .putValue("appId", "123"),
