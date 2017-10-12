@@ -28,7 +28,9 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import io.intercom.android.sdk.Intercom;
@@ -153,9 +155,11 @@ public class IntercomTest {
     public void identifyWithIllegalNestedProperties() {
         Traits traits = createTraits("123");
         Map<String, Object> address = new HashMap<>();
+        List<String> list = new ArrayList<>();
         address.put("city", "San Francisco");
         address.put("state", "California");
         traits.put("address", address);
+        traits.put("list", list);
         integration.identify(new IdentifyPayloadBuilder().traits(traits).build());
         verify(intercom).updateUser(any(UserAttributes.class));
 
@@ -180,12 +184,15 @@ public class IntercomTest {
     @Test
     public void trackWithIllegalNestedProperties() {
         Properties properties = new Properties();
-        Map <String, Object> bar = new HashMap<>();
+        Map<String, Object> bar = new HashMap<>();
+        List<String> list = new ArrayList<>();
         properties.putValue("foo", bar);
         properties.putValue("baz", "yo");
+        properties.putValue("list", list);
         integration.track(new TrackPayloadBuilder().event("Baz").properties(properties).build());
 
         properties.remove("foo");
+        properties.remove("list");
         verify(intercom).logEvent("Baz", properties);
     }
 
@@ -229,9 +236,11 @@ public class IntercomTest {
     public void groupWithIllegalNestedTraits() {
         Traits traits = createTraits("123");
         Map<String, Object> address = new HashMap<>();
+        List<String> list = new ArrayList<>();
         address.put("city", "San Francisco");
         address.put("state", "California");
         traits.put("address", address);
+        traits.put("list", list);
         integration.group(new GroupPayloadBuilder().traits(traits).build());
         verify(intercom).updateUser(any(UserAttributes.class));
         // waiting for Intercom getter method to check values in company object
