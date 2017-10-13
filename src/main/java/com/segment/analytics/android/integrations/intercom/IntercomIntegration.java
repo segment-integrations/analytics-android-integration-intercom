@@ -32,7 +32,7 @@ import static com.segment.analytics.internal.Utils.isNullOrEmpty;
  * @see <a href="https://developers.intercom.com/v2.0/docs/android-installation">Intercom for
  *     Android</a>
  */
-public class IntercomIntegration extends Integration<Void> {
+public class IntercomIntegration extends Integration<Intercom> {
 
   public static final Factory FACTORY =
       new Factory() {
@@ -199,6 +199,11 @@ public class IntercomIntegration extends Integration<Void> {
     super.reset();
     intercom.logout();
     logger.verbose("Intercom.client().reset()");
+  }
+
+  @Override
+  public Intercom getUnderlyingInstance() {
+    return intercom;
   }
 
   private void setUserAttributes(Traits realTraits, @Nullable Map<String, Object> intercomOptions) {
