@@ -32,7 +32,7 @@ import static com.segment.analytics.internal.Utils.isNullOrEmpty;
  * @see <a href="https://developers.intercom.com/v2.0/docs/android-installation">Intercom for
  *     Android</a>
  */
-public class IntercomIntegration extends Integration<Void> {
+public class IntercomIntegration extends Integration<Intercom> {
 
   public static final Factory FACTORY =
       new Factory() {
@@ -196,8 +196,14 @@ public class IntercomIntegration extends Integration<Void> {
   }
 
   public void reset() {
+    super.reset();
     intercom.logout();
     logger.verbose("Intercom.client().reset()");
+  }
+
+  @Override
+  public Intercom getUnderlyingInstance() {
+    return intercom;
   }
 
   private void setUserAttributes(Traits realTraits, @Nullable Map<String, Object> intercomOptions) {
@@ -243,12 +249,14 @@ public class IntercomIntegration extends Integration<Void> {
         userAttributes.withUnsubscribedFromEmails(unsubscribedFromEmails);
       }
     }
+
     if (traitsCopy.containsKey(COMPANY) && traitsCopy.get(COMPANY) instanceof Map) {
       Map<String, Object> companyObj = (HashMap<String, Object>) traitsCopy.get(COMPANY);
       Company company = setCompany(companyObj);
       userAttributes.withCompany(company);
       traitsCopy.remove(COMPANY);
     }
+
     for (Map.Entry<String, Object> entry : traitsCopy.entrySet()) {
       String trait = entry.getKey();
       Object value = entry.getValue();
@@ -256,6 +264,7 @@ public class IntercomIntegration extends Integration<Void> {
         userAttributes.withCustomAttribute(trait, value);
       }
     }
+
     intercom.updateUser(userAttributes.build());
     logger.verbose("Intercom.client().updateUser(userAttributes)");
   }
@@ -270,12 +279,12 @@ public class IntercomIntegration extends Integration<Void> {
       payload.remove(NAME);
     }
     if (payload.containsKey(CREATED_AT)) {
-      Long createdAt = (long) payload.get(CREATED_AT);
+      long createdAt = (long) payload.get(CREATED_AT);
       company.withCreatedAt(createdAt);
       payload.remove(CREATED_AT);
     }
     if (payload.containsKey(MONTHLY_SPEND)) {
-      Integer monthlySpend = (int) payload.get(MONTHLY_SPEND);
+      int monthlySpend = (int) payload.get(MONTHLY_SPEND);
       company.withMonthlySpend(monthlySpend);
       payload.remove(MONTHLY_SPEND);
     }
