@@ -196,6 +196,7 @@ public class IntercomIntegration extends Integration<Void> {
   }
 
   public void reset() {
+    super.reset();
     intercom.logout();
     logger.verbose("Intercom.client().reset()");
   }
@@ -243,12 +244,14 @@ public class IntercomIntegration extends Integration<Void> {
         userAttributes.withUnsubscribedFromEmails(unsubscribedFromEmails);
       }
     }
+
     if (traitsCopy.containsKey(COMPANY) && traitsCopy.get(COMPANY) instanceof Map) {
       Map<String, Object> companyObj = (HashMap<String, Object>) traitsCopy.get(COMPANY);
       Company company = setCompany(companyObj);
       userAttributes.withCompany(company);
       traitsCopy.remove(COMPANY);
     }
+
     for (Map.Entry<String, Object> entry : traitsCopy.entrySet()) {
       String trait = entry.getKey();
       Object value = entry.getValue();
@@ -256,6 +259,7 @@ public class IntercomIntegration extends Integration<Void> {
         userAttributes.withCustomAttribute(trait, value);
       }
     }
+
     intercom.updateUser(userAttributes.build());
     logger.verbose("Intercom.client().updateUser(userAttributes)");
   }
@@ -270,12 +274,12 @@ public class IntercomIntegration extends Integration<Void> {
       payload.remove(NAME);
     }
     if (payload.containsKey(CREATED_AT)) {
-      Long createdAt = (long) payload.get(CREATED_AT);
+      long createdAt = (long) payload.get(CREATED_AT);
       company.withCreatedAt(createdAt);
       payload.remove(CREATED_AT);
     }
     if (payload.containsKey(MONTHLY_SPEND)) {
-      Integer monthlySpend = (int) payload.get(MONTHLY_SPEND);
+      int monthlySpend = (int) payload.get(MONTHLY_SPEND);
       company.withMonthlySpend(monthlySpend);
       payload.remove(MONTHLY_SPEND);
     }
