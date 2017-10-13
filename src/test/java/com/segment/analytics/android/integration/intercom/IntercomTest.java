@@ -28,7 +28,9 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import io.intercom.android.sdk.Intercom;
@@ -82,13 +84,20 @@ public class IntercomTest {
     }
 
     @Test
-    public void identify() {
+    public void identifyWithUserId() {
         Traits traits = createTraits("123");
         integration.identify(new IdentifyPayloadBuilder().traits(traits).build());
 
         ArgumentCaptor<Registration> argument = ArgumentCaptor.forClass(Registration.class);
         verify(intercom).registerIdentifiedUser(argument.capture());
         assertEquals("123", argument.getValue().getUserId());
+    }
+
+    @Test
+    public void identifyWithoutUserId() {
+        Traits traits = new Traits();
+        integration.identify(new IdentifyPayloadBuilder().traits(traits).build());
+        verify(intercom).registerUnidentifiedUser();
     }
 
     @Test
@@ -142,12 +151,25 @@ public class IntercomTest {
         verify(intercom).updateUser(any(UserAttributes.class));
     }
 
-
     @Test
-    public void track() {
-        integration.track(new TrackPayloadBuilder().event("Foo").build());
+    public void identifyWithIllegalNestedProperties() {
+        Traits traits = createTraits("123");
+        Map<String, Object> address = new HashMap<>();
+        List<String> list = new ArrayList<>();
+        address.put("city", "San Francisco");
+        address.put("state", "California");
+        traits.put("address", address);
+        traits.put("list", list);
+        integration.identify(new IdentifyPayloadBuilder().traits(traits).build());
+        verify(intercom).updateUser(any(UserAttributes.class));
 
-        verify(intercom).logEvent("Foo");
+        ArgumentCaptor<UserAttributes> attributesArgumentCaptor = ArgumentCaptor.forClass(UserAttributes.class);
+        verify(intercom).updateUser(attributesArgumentCaptor.capture());
+
+        UserAttributes capturedAttributes = attributesArgumentCaptor.getValue();
+        Map<String, Object> mapOfAttributes = capturedAttributes.toMap();
+
+        assertEquals(0, mapOfAttributes.size());
     }
 
     @Test
@@ -162,12 +184,15 @@ public class IntercomTest {
     @Test
     public void trackWithIllegalNestedProperties() {
         Properties properties = new Properties();
-        Map <String, Object> bar = new HashMap<>();
+        Map<String, Object> bar = new HashMap<>();
+        List<String> list = new ArrayList<>();
         properties.putValue("foo", bar);
         properties.putValue("baz", "yo");
+        properties.putValue("list", list);
         integration.track(new TrackPayloadBuilder().event("Baz").properties(properties).build());
 
         properties.remove("foo");
+        properties.remove("list");
         verify(intercom).logEvent("Baz", properties);
     }
 
@@ -193,7 +218,7 @@ public class IntercomTest {
     }
 
     @Test
-    public void group() {
+    public void groupWithSpeccedAttributes() {
         Traits traits = new Traits();
         long createdAt = 123344L;
         int monthlySpend = 100;
@@ -204,6 +229,21 @@ public class IntercomTest {
         traits.put("plan", "startup");
         integration.group(new GroupPayloadBuilder().groupId("123").groupTraits(traits).build());
         verify(intercom).updateUser(any(UserAttributes.class));
+        // waiting for Intercom getter method to check values in company object
+    }
+
+    @Test
+    public void groupWithIllegalNestedTraits() {
+        Traits traits = createTraits("123");
+        Map<String, Object> address = new HashMap<>();
+        List<String> list = new ArrayList<>();
+        address.put("city", "San Francisco");
+        address.put("state", "California");
+        traits.put("address", address);
+        traits.put("list", list);
+        integration.group(new GroupPayloadBuilder().traits(traits).build());
+        verify(intercom).updateUser(any(UserAttributes.class));
+        // waiting for Intercom getter method to check values in company object
     }
 
     @Test

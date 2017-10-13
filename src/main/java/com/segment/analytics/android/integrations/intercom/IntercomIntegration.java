@@ -13,6 +13,7 @@ import com.segment.analytics.integrations.Integration;
 import com.segment.analytics.integrations.Logger;
 import com.segment.analytics.integrations.TrackPayload;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -166,7 +167,7 @@ public class IntercomIntegration extends Integration<Void> {
       for (Map.Entry<String, Object> entry : realProperties.entrySet()) {
         String key = entry.getKey();
         Object value = entry.getValue();
-        if (key.equals("products") || value instanceof Map) {
+        if (key.equals("products") || value instanceof Map || value instanceof Collection) {
           propertiesCopy.remove(key);
         }
       }
@@ -251,7 +252,9 @@ public class IntercomIntegration extends Integration<Void> {
     for (Map.Entry<String, Object> entry : traitsCopy.entrySet()) {
       String trait = entry.getKey();
       Object value = entry.getValue();
-      userAttributes.withCustomAttribute(trait, value);
+      if (!(value instanceof Map || value instanceof Collection)) {
+        userAttributes.withCustomAttribute(trait, value);
+      }
     }
     intercom.updateUser(userAttributes.build());
     logger.verbose("Intercom.client().updateUser(userAttributes)");
@@ -285,7 +288,9 @@ public class IntercomIntegration extends Integration<Void> {
     for (Map.Entry<String, Object> entry : payload.entrySet()) {
       String trait = entry.getKey();
       Object value = entry.getValue();
-      company.withCustomAttribute(trait, value);
+      if (!(value instanceof Map || value instanceof Collection)) {
+        company.withCustomAttribute(trait, value);
+      }
     }
     return company.build();
   }
