@@ -1,8 +1,8 @@
 analytics-android-integration-intercom
 =======================================
 
-[![Maven Central]()
-[![Javadocs]()
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.segment.analytics.android.integrations/intercom/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.segment.analytics.android.integrations/intercom)
+[![Javadocs](http://javadoc-badge.appspot.com/com.segment.analytics.android.integrations/intercom.svg?label=javadoc)](http://javadoc-badge.appspot.com/com.segment.analytics.android.integrations/intercom)
 
 Intercom integration for [analytics-android](https://github.com/segmentio/analytics-android).
 
