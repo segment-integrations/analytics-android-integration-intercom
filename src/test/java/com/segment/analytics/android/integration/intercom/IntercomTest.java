@@ -15,6 +15,7 @@ import com.segment.analytics.test.GroupPayloadBuilder;
 import com.segment.analytics.test.IdentifyPayloadBuilder;
 import com.segment.analytics.test.TrackPayloadBuilder;
 
+import io.intercom.android.sdk.Company;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -44,6 +45,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
+import static org.assertj.core.api.Java6Assertions.assertThat;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(constants = BuildConfig.class)
@@ -53,7 +55,6 @@ public class IntercomTest {
     @Rule public PowerMockRule rule = new PowerMockRule();
     @Mock Application application;
     @Mock Intercom intercom;
-    @Mock Analytics analytics;
     private IntercomIntegration integration;
     private IntercomIntegration.Provider mockProvider = new IntercomIntegration.Provider() {
         @Override
@@ -148,7 +149,20 @@ public class IntercomTest {
         company.put("name", "Acme");
         traits.put("company", company);
         integration.identify(new IdentifyPayloadBuilder().traits(traits).build());
-        verify(intercom).updateUser(any(UserAttributes.class));
+
+        Company expectedCompany = new Company.Builder()
+            .withCompanyId("456")
+            .withName("Acme")
+            .build();
+
+        UserAttributes expectedUserAttributes = new UserAttributes.Builder()
+            .withCompany(expectedCompany)
+            .build();
+
+        ArgumentCaptor<UserAttributes> attributesArgumentCaptor = ArgumentCaptor.forClass(UserAttributes.class);
+        verify(intercom).updateUser(attributesArgumentCaptor.capture());
+
+        assertThat(expectedUserAttributes).isEqualToComparingFieldByFieldRecursively(attributesArgumentCaptor.getValue());
     }
 
     @Test

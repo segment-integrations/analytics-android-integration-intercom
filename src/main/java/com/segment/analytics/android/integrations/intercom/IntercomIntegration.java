@@ -272,6 +272,7 @@ public class IntercomIntegration extends Integration<Intercom> {
   private Company setCompany(Map<String, Object> payload) {
     Company.Builder company = new Company.Builder();
     company.withCompanyId(String.valueOf(payload.get("id")));
+    payload.remove("id");
 
     if (payload.containsKey(NAME)) {
       String name = String.valueOf(payload.get(NAME));
