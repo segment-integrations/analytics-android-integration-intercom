@@ -172,6 +172,28 @@ public class IntercomTest {
     }
 
     @Test
+    public void identifyWithCompanyNoId() {
+        Map<String, Object> company = new HashMap<>();
+        company.put("name", "Acme");
+
+        Traits traits = createTraits("123")
+            .putValue("company", company);
+
+        integration.identify(new IdentifyPayloadBuilder()
+            .traits(traits)
+            .build());
+
+        Company expectedCompany = new Company.Builder()
+            .build();
+
+        UserAttributes expectedUserAttributes = new UserAttributes.Builder()
+            .withCompany(expectedCompany)
+            .build();
+
+        verify(intercom).updateUser(isEqualToComparingFieldByFieldRecursively(expectedUserAttributes));
+    }
+
+    @Test
     public void identifyWithIllegalNestedProperties() {
         Map<String, Object> address = new HashMap<>();
         address.put("city", "San Francisco");
