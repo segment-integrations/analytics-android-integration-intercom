@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.assertj.core.matcher.AssertionMatcher;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -34,8 +35,7 @@ import org.robolectric.annotation.Config;
 
 import static com.segment.analytics.Analytics.LogLevel.VERBOSE;
 import static com.segment.analytics.Utils.createTraits;
-import static com.shazam.shazamcrest.matcher.Matchers.sameBeanAs;
-import static org.hamcrest.Matchers.samePropertyValuesAs;
+import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -87,7 +87,7 @@ public class IntercomTest {
             .build());
 
         Registration expectedRegistration = Registration.create().withUserId("123");
-        verify(intercom).registerIdentifiedUser(argThat(samePropertyValuesAs(expectedRegistration)));
+        verify(intercom).registerIdentifiedUser(isEqualToComparingFieldByFieldRecursively(expectedRegistration));
     }
 
     @Test
@@ -143,7 +143,7 @@ public class IntercomTest {
             .withUnsubscribedFromEmails(true)
             .build();
 
-        verify(intercom).updateUser(argThat(sameBeanAs(expectedUserAttributes)));
+        verify(intercom).updateUser(isEqualToComparingFieldByFieldRecursively(expectedUserAttributes));
     }
 
     @Test
@@ -168,7 +168,7 @@ public class IntercomTest {
             .withCompany(expectedCompany)
             .build();
 
-        verify(intercom).updateUser(argThat(sameBeanAs(expectedUserAttributes)));
+        verify(intercom).updateUser(isEqualToComparingFieldByFieldRecursively(expectedUserAttributes));
     }
 
     @Test
@@ -189,7 +189,7 @@ public class IntercomTest {
         UserAttributes expectedUserAttributes = new UserAttributes.Builder()
             .build();
 
-        verify(intercom).updateUser(argThat(sameBeanAs(expectedUserAttributes)));
+        verify(intercom).updateUser(isEqualToComparingFieldByFieldRecursively(expectedUserAttributes));
     }
 
     @Test
@@ -281,7 +281,7 @@ public class IntercomTest {
             .withCompany(expectedCompany)
             .build();
 
-        verify(intercom).updateUser(argThat(sameBeanAs(expectedUserAttributes)));
+        verify(intercom).updateUser(isEqualToComparingFieldByFieldRecursively(expectedUserAttributes));
     }
 
     @Test
@@ -307,12 +307,21 @@ public class IntercomTest {
             .withCompany(expectedCompany)
             .build();
 
-        verify(intercom).updateUser(argThat(sameBeanAs(expectedUserAttributes)));
+        verify(intercom).updateUser(isEqualToComparingFieldByFieldRecursively(expectedUserAttributes));
     }
 
     @Test
     public void reset() {
         integration.reset();
         verify(intercom).logout();
+    }
+
+    private static <T> T isEqualToComparingFieldByFieldRecursively(final T expected) {
+        return argThat(new AssertionMatcher<T>(){
+            @Override
+            public void assertion(T actual) throws AssertionError {
+                assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+            }
+        });
     }
 }
