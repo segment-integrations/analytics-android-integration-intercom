@@ -1,8 +1,6 @@
 package com.segment.analytics.android.integration.intercom;
 
 import android.app.Application;
-
-import com.segment.analytics.Analytics;
 import com.segment.analytics.Options;
 import com.segment.analytics.Properties;
 import com.segment.analytics.Properties.Product;
@@ -14,12 +12,19 @@ import com.segment.analytics.integrations.Logger;
 import com.segment.analytics.test.GroupPayloadBuilder;
 import com.segment.analytics.test.IdentifyPayloadBuilder;
 import com.segment.analytics.test.TrackPayloadBuilder;
-
+import io.intercom.android.sdk.Company;
+import io.intercom.android.sdk.Intercom;
+import io.intercom.android.sdk.UserAttributes;
+import io.intercom.android.sdk.identity.Registration;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.assertj.core.matcher.AssertionMatcher;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
@@ -28,19 +33,10 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import io.intercom.android.sdk.Intercom;
-import io.intercom.android.sdk.UserAttributes;
-import io.intercom.android.sdk.identity.Registration;
-
 import static com.segment.analytics.Analytics.LogLevel.VERBOSE;
 import static com.segment.analytics.Utils.createTraits;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
+import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
@@ -53,7 +49,6 @@ public class IntercomTest {
     @Rule public PowerMockRule rule = new PowerMockRule();
     @Mock Application application;
     @Mock Intercom intercom;
-    @Mock Analytics analytics;
     private IntercomIntegration integration;
     private IntercomIntegration.Provider mockProvider = new IntercomIntegration.Provider() {
         @Override
@@ -74,10 +69,11 @@ public class IntercomTest {
     @Test
     public void initialize() {
         PowerMockito.mockStatic(Intercom.class);
-        integration = new IntercomIntegration(mockProvider, application, new ValueMap()
+        integration = new IntercomIntegration(mockProvider, application,
+            new ValueMap()
                 .putValue("mobileApiKey", "123")
                 .putValue("appId", "123"),
-                Logger.with(VERBOSE));
+            Logger.with(VERBOSE));
 
         verifyStatic();
         Intercom.initialize(application, "123", "123");
@@ -86,132 +82,194 @@ public class IntercomTest {
     @Test
     public void identifyWithUserId() {
         Traits traits = createTraits("123");
-        integration.identify(new IdentifyPayloadBuilder().traits(traits).build());
+        integration.identify(new IdentifyPayloadBuilder()
+            .traits(traits)
+            .build());
 
-        ArgumentCaptor<Registration> argument = ArgumentCaptor.forClass(Registration.class);
-        verify(intercom).registerIdentifiedUser(argument.capture());
-        assertEquals("123", argument.getValue().getUserId());
+        Registration expectedRegistration = Registration.create().withUserId("123");
+        verify(intercom).registerIdentifiedUser(isEqualToComparingFieldByFieldRecursively(expectedRegistration));
     }
 
     @Test
     public void identifyWithoutUserId() {
-        Traits traits = new Traits();
-        integration.identify(new IdentifyPayloadBuilder().traits(traits).build());
+        integration.identify(new IdentifyPayloadBuilder()
+            .traits(new Traits())
+            .build());
         verify(intercom).registerUnidentifiedUser();
     }
 
     @Test
     public void identifyWithUserHash() {
         Traits traits = createTraits("123");
-        Options options = new Options();
-        Map<String, Object> intercomOptions = new HashMap<>();
-        intercomOptions.put("userHash", "567");
-        options.setIntegrationOptions("Intercom", intercomOptions);
-        integration.identify(new IdentifyPayloadBuilder().traits(traits).options(options).build());
+        integration.identify(new IdentifyPayloadBuilder()
+            .traits(traits)
+            .options(new Options()
+                .setIntegrationOptions("Intercom", new ValueMap()
+                    .putValue("userHash", "567")
+                )
+            )
+            .build());
+
         verify(intercom).setUserHash("567");
     }
 
     @Test
     public void identifyWithSpeccedAttributes() {
         long createdAt = 123344L;
-        Traits traits = createTraits("123");
-        traits.putName("Brennan");
-        traits.putEmail("testing@segment.com");
-        traits.putPhone("1112223333");
+
+        Traits traits = createTraits("123")
+            .putName("Brennan")
+            .putEmail("testing@segment.com")
+            .putPhone("1112223333");
+
         Options options = new Options();
         Map<String, Object> intercomOptions = new HashMap<>();
         intercomOptions.put("languageOverride", "testing");
         intercomOptions.put("createdAt", createdAt);
         intercomOptions.put("unsubscribedFromEmails", true);
         options.setIntegrationOptions("Intercom", intercomOptions);
-        integration.identify(new IdentifyPayloadBuilder().traits(traits).options(options).build());
 
-        ArgumentCaptor<UserAttributes> attributesArgumentCaptor = ArgumentCaptor.forClass(UserAttributes.class);
-        verify(intercom).updateUser(attributesArgumentCaptor.capture());
+        integration.identify(new IdentifyPayloadBuilder()
+            .traits(traits)
+            .options(options)
+            .build());
 
-        UserAttributes capturedAttributes = attributesArgumentCaptor.getValue();
-        Map<String, Object> mapOfAttributes = capturedAttributes.toMap();
+        UserAttributes expectedUserAttributes = new UserAttributes.Builder()
+            .withName("Brennan")
+            .withEmail("testing@segment.com")
+            .withPhone("1112223333")
+            .withLanguageOverride("testing")
+            .withSignedUpAt(123344L)
+            .withUnsubscribedFromEmails(true)
+            .build();
 
-        assertEquals("Brennan", String.valueOf(mapOfAttributes.get("name")));
-        assertEquals("testing@segment.com", String.valueOf(mapOfAttributes.get("email")));
-        assertEquals("1112223333", String.valueOf(mapOfAttributes.get("phone")));
-        assertEquals("testing", String.valueOf(mapOfAttributes.get("language_override")));
-        assertEquals(createdAt, mapOfAttributes.get("signed_up_at"));
-        assertEquals(true, mapOfAttributes.get("unsubscribed_from_emails"));
+        verify(intercom).updateUser(isEqualToComparingFieldByFieldRecursively(expectedUserAttributes));
     }
 
     @Test
     public void identifyWithCompany() {
-        Traits traits = createTraits("123");
         Map<String, Object> company = new HashMap<>();
         company.put("id", "456");
         company.put("name", "Acme");
-        traits.put("company", company);
-        integration.identify(new IdentifyPayloadBuilder().traits(traits).build());
-        verify(intercom).updateUser(any(UserAttributes.class));
+
+        Traits traits = createTraits("123")
+            .putValue("company", company);
+
+        integration.identify(new IdentifyPayloadBuilder()
+            .traits(traits)
+            .build());
+
+        Company expectedCompany = new Company.Builder()
+            .withCompanyId("456")
+            .withName("Acme")
+            .build();
+
+        UserAttributes expectedUserAttributes = new UserAttributes.Builder()
+            .withCompany(expectedCompany)
+            .build();
+
+        verify(intercom).updateUser(isEqualToComparingFieldByFieldRecursively(expectedUserAttributes));
+    }
+
+    @Test
+    public void identifyWithCompanyNoId() {
+        Map<String, Object> company = new HashMap<>();
+        company.put("name", "Acme");
+
+        Traits traits = createTraits("123")
+            .putValue("company", company);
+
+        integration.identify(new IdentifyPayloadBuilder()
+            .traits(traits)
+            .build());
+
+        Company expectedCompany = new Company.Builder()
+            .build();
+
+        UserAttributes expectedUserAttributes = new UserAttributes.Builder()
+            .withCompany(expectedCompany)
+            .build();
+
+        verify(intercom).updateUser(isEqualToComparingFieldByFieldRecursively(expectedUserAttributes));
     }
 
     @Test
     public void identifyWithIllegalNestedProperties() {
-        Traits traits = createTraits("123");
         Map<String, Object> address = new HashMap<>();
-        List<String> list = new ArrayList<>();
         address.put("city", "San Francisco");
         address.put("state", "California");
+        List<String> list = new ArrayList<>();
+
+        Traits traits = createTraits("123");
         traits.put("address", address);
         traits.put("list", list);
-        integration.identify(new IdentifyPayloadBuilder().traits(traits).build());
-        verify(intercom).updateUser(any(UserAttributes.class));
 
-        ArgumentCaptor<UserAttributes> attributesArgumentCaptor = ArgumentCaptor.forClass(UserAttributes.class);
-        verify(intercom).updateUser(attributesArgumentCaptor.capture());
+        integration.identify(new IdentifyPayloadBuilder()
+            .traits(traits)
+            .build());
 
-        UserAttributes capturedAttributes = attributesArgumentCaptor.getValue();
-        Map<String, Object> mapOfAttributes = capturedAttributes.toMap();
+        UserAttributes expectedUserAttributes = new UserAttributes.Builder()
+            .build();
 
-        assertEquals(0, mapOfAttributes.size());
+        verify(intercom).updateUser(isEqualToComparingFieldByFieldRecursively(expectedUserAttributes));
     }
 
     @Test
     public void trackWithCustomProperties() {
         Properties properties = new Properties();
         properties.putValue("foo", "bar");
-        integration.track(new TrackPayloadBuilder().event("Baz").properties(properties).build());
 
-        verify(intercom).logEvent("Baz", properties.toStringMap());
+        integration.track(new TrackPayloadBuilder()
+            .event("Baz")
+            .properties(properties)
+            .build());
+
+        verify(intercom).logEvent("Baz", properties);
     }
 
     @Test
     public void trackWithIllegalNestedProperties() {
-        Properties properties = new Properties();
         Map<String, Object> bar = new HashMap<>();
         List<String> list = new ArrayList<>();
-        properties.putValue("foo", bar);
-        properties.putValue("baz", "yo");
-        properties.putValue("list", list);
-        integration.track(new TrackPayloadBuilder().event("Baz").properties(properties).build());
+
+        Properties properties = new Properties()
+            .putValue("foo", bar)
+            .putValue("baz", "yo")
+            .putValue("list", list);
+
+        integration.track(new TrackPayloadBuilder()
+            .event("Baz")
+            .properties(properties)
+            .build());
 
         properties.remove("foo");
         properties.remove("list");
+
         verify(intercom).logEvent("Baz", properties);
     }
 
     @Test
     public void trackWithRevenue() {
-        Properties properties = new Properties();
-        properties.putValue("orderId", "12345");
-        properties.putValue("revenue", 100.0);
-        properties.putCurrency("USD");
         Product product = new Product("456", "ABC", 100.0);
         Product product2 = new Product("789", "DEF", 100.0);
-        properties.putProducts(product, product2);
-        integration.track(new TrackPayloadBuilder().event("Order Completed").properties(properties).build());
 
-        Map<String, Object> expectedProperties = new HashMap<>();
-        expectedProperties.put("orderId", "12345");
+        Properties properties = new Properties()
+            .putValue("orderId", "12345")
+            .putValue("revenue", 100.0)
+            .putCurrency("USD")
+            .putProducts(product, product2);
+
+        integration.track(new TrackPayloadBuilder()
+            .event("Order Completed")
+            .properties(properties)
+            .build());
+
         Map<String, Object> price = new HashMap<>();
         price.put("amount", 10000);
         price.put("currency", "USD");
+
+        Map<String, Object> expectedProperties = new HashMap<>();
+        expectedProperties.put("orderId", "12345");
         expectedProperties.put("price", price);
 
         verify(intercom).logEvent("Order Completed", expectedProperties);
@@ -219,36 +277,73 @@ public class IntercomTest {
 
     @Test
     public void groupWithSpeccedAttributes() {
-        Traits traits = new Traits();
         long createdAt = 123344L;
         int monthlySpend = 100;
 
+        Traits traits = new Traits();
         traits.put("name", "Acme");
         traits.put("createdAt", createdAt);
         traits.put("monthlySpend", monthlySpend);
         traits.put("plan", "startup");
-        integration.group(new GroupPayloadBuilder().groupId("123").groupTraits(traits).build());
-        verify(intercom).updateUser(any(UserAttributes.class));
-        // waiting for Intercom getter method to check values in company object
+
+        integration.group(new GroupPayloadBuilder()
+            .groupId("123")
+            .groupTraits(traits)
+            .build());
+
+        Company expectedCompany = new Company.Builder()
+            .withCompanyId("123")
+            .withName("Acme")
+            .withCreatedAt(createdAt)
+            .withMonthlySpend(monthlySpend)
+            .withPlan("startup")
+            .build();
+
+        UserAttributes expectedUserAttributes = new UserAttributes.Builder()
+            .withCompany(expectedCompany)
+            .build();
+
+        verify(intercom).updateUser(isEqualToComparingFieldByFieldRecursively(expectedUserAttributes));
     }
 
     @Test
     public void groupWithIllegalNestedTraits() {
-        Traits traits = createTraits("123");
         Map<String, Object> address = new HashMap<>();
-        List<String> list = new ArrayList<>();
         address.put("city", "San Francisco");
         address.put("state", "California");
+        List<String> list = new ArrayList<>();
+
+        Traits traits = new Traits();
         traits.put("address", address);
         traits.put("list", list);
-        integration.group(new GroupPayloadBuilder().traits(traits).build());
-        verify(intercom).updateUser(any(UserAttributes.class));
-        // waiting for Intercom getter method to check values in company object
+
+        integration.group(new GroupPayloadBuilder()
+            .groupId("123")
+            .build());
+
+        Company expectedCompany = new Company.Builder()
+            .withCompanyId("123")
+            .build();
+
+        UserAttributes expectedUserAttributes = new UserAttributes.Builder()
+            .withCompany(expectedCompany)
+            .build();
+
+        verify(intercom).updateUser(isEqualToComparingFieldByFieldRecursively(expectedUserAttributes));
     }
 
     @Test
     public void reset() {
         integration.reset();
         verify(intercom).logout();
+    }
+
+    private static <T> T isEqualToComparingFieldByFieldRecursively(final T expected) {
+        return argThat(new AssertionMatcher<T>(){
+            @Override
+            public void assertion(T actual) throws AssertionError {
+                assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+            }
+        });
     }
 }
