@@ -11,7 +11,7 @@ Intercom integration for [analytics-android](https://github.com/segmentio/analyt
 To install the Segment-Intercom integration, simply add this line to your gradle file:
 
 ```
-compile 'com.segment.analytics.android.integrations:intercom:1.0.0-beta'
+compile 'com.segment.analytics.android.integrations:intercom:1.1.0-beta'
 ```
 
 ## Usage
