@@ -98,6 +98,9 @@ public class IntercomIntegration extends Integration<Intercom> {
     Intercom.initialize(application, mobileApiKey, appId);
     this.intercom = provider.get();
     this.logger = logger;
+ 
+    this.intercom.registerUnidentifiedUser();
+    logger.verbose("Intercom.client().registerUnidentifiedUser()");
   }
 
   @Override
@@ -199,6 +202,9 @@ public class IntercomIntegration extends Integration<Intercom> {
     super.reset();
     intercom.logout();
     logger.verbose("Intercom.client().reset()");
+
+    intercom.registerUnidentifiedUser();
+    logger.verbose("Intercom.client().registerUnidentifiedUser()");
   }
 
   @Override
