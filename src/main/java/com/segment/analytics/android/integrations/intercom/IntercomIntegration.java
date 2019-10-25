@@ -1,8 +1,6 @@
 package com.segment.analytics.android.integrations.intercom;
 
 import android.app.Application;
-
-
 import androidx.annotation.Nullable;
 
 import com.segment.analytics.Analytics;
@@ -117,7 +115,6 @@ public class IntercomIntegration extends Integration<Intercom> {
       intercom.registerIdentifiedUser(registration);
       logger.verbose("Intercom.client().registerIdentifiedUser(registration)");
     }
-
 
     Map<String, Object> intercomOptions = identify.integrations().getValueMap("Intercom");
     if (!isNullOrEmpty(intercomOptions)
