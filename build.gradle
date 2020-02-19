@@ -1,10 +1,13 @@
 buildscript {
   repositories {
     jcenter()
+      google()
+
+
   }
 
   dependencies {
-    classpath 'com.android.tools.build:gradle:2.3.3'
+    classpath 'com.android.tools.build:gradle:3.4.0'
     classpath 'com.f2prateek.javafmt:javafmt:0.1.6'
   }
 }
@@ -17,7 +20,7 @@ android {
   buildToolsVersion '25.0.3'
 
   defaultConfig {
-    minSdkVersion 15
+    minSdkVersion 21
     targetSdkVersion 26
     compileSdkVersion 26
   }
@@ -38,12 +41,15 @@ dependencies {
     maven {
       url "https://maven.google.com"
     }
-  }
+
+
+    }
 
   compile 'com.segment.analytics.android:analytics:4.0.0'
   testCompile 'com.segment.analytics.android:analytics-tests:4.2.6'
 
-  compile 'io.intercom.android:intercom-sdk-base:4.1.2'
+
+  compile 'io.intercom.android:intercom-sdk-base:6.+'
   compile 'io.intercom.android:intercom-sdk-fcm:4.1.2'
 
   testCompile 'junit:junit:4.12'
