@@ -2,8 +2,6 @@ buildscript {
   repositories {
     jcenter()
       google()
-
-
   }
 
   dependencies {
@@ -41,9 +39,7 @@ dependencies {
     maven {
       url "https://maven.google.com"
     }
-
-
-    }
+  }
 
   compile 'com.segment.analytics.android:analytics:4.0.0'
   testCompile 'com.segment.analytics.android:analytics-tests:4.2.6'
