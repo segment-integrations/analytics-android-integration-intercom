@@ -49,11 +49,11 @@ dependencies {
     google()
   }
 
-  implementation 'com.segment.analytics.android:analytics:4.0.0'
-  testImplementation 'com.segment.analytics.android:analytics-tests:4.2.6'
+  implementation 'com.segment.analytics.android:analytics:4.9.3'
+  testImplementation 'com.segment.analytics.android:analytics-tests:4.9.3'
 
-  implementation 'io.intercom.android:intercom-sdk-base:6.0.1'
-  implementation 'io.intercom.android:intercom-sdk-fcm:6.0.1'
+  implementation 'io.intercom.android:intercom-sdk-base:9.1.2'
+  implementation 'io.intercom.android:intercom-sdk-fcm:9.1.2'
 
 //  Test dependencies
   testImplementation 'junit:junit:4.12'
