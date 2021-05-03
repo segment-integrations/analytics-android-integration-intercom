@@ -1,3 +1,8 @@
+Version 1.3.0 (3rd May, 2021)
+==================================
+  * Bumps Intercom SDK from 6.0.1 to 9.1.2
+  * Adds Support annotations and appcompat libs
+
 Version 1.2.0 (23rd March, 2020)
 ==================================
 *(Supports analytics-android 4.0.0 and Intercom Base 6.0.1 and Intercom Firebase Cloud Messenger 6.0.1)*
