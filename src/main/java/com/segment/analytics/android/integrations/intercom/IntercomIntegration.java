@@ -1,7 +1,7 @@
 package com.segment.analytics.android.integrations.intercom;
 
 import android.app.Application;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 import com.segment.analytics.Analytics;
 import com.segment.analytics.Properties;
